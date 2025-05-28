@@ -33,7 +33,7 @@ export default function About({ isMobile }) {
   
     let plane;
     const loader = new GLTFLoader();
-    loader.load('/jet.glb', (gltf) => {
+    loader.load('/glbs/jet.glb', (gltf) => {
       plane = gltf.scene;
       plane.scale.set(0.02, 0.02, 0.02); // Adjust size if needed
       scene.add(plane);
