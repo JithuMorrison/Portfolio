@@ -4,7 +4,8 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 
 export default function About({ isMobile }) {
   const aboutVisualRef = useRef(null);
-  let glowTime = 0;
+  let frameId;
+  const glowIntensity = useRef(0);
 
   useEffect(() => {
     if (!aboutVisualRef.current) return;
@@ -13,52 +14,124 @@ export default function About({ isMobile }) {
     const width = container.clientWidth;
     const height = container.clientHeight;
   
+    // Scene setup
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    const renderer = new THREE.WebGLRenderer({ 
+      antialias: true, 
+      alpha: true 
+    });
     renderer.setSize(width+340, height+340);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     container.appendChild(renderer.domElement);
   
-    const geometry = new THREE.IcosahedronGeometry(1.5, 1);
+    // Sun core
+    const geometry = new THREE.IcosahedronGeometry(1.5, 3);
     const material = new THREE.MeshPhongMaterial({
-      color: 0x00a8ff,
-      emissive: 0x0044ff,
+      color: 0xff9933,
+      emissive: 0xff6600,
       emissiveIntensity: 0.5,
       shininess: 100,
+      specular: 0xffffee,
       wireframe: false,
       transparent: true,
-      opacity: 0.9
+      opacity: 0.98
     });
-    const mesh = new THREE.Mesh(geometry, material);
-    scene.add(mesh);
+    const sunMesh = new THREE.Mesh(geometry, material);
+    scene.add(sunMesh);
+
+    // Corona with layered spheres for better glow
+    const coronaLayers = [];
+    const coronaColors = [0xff8800, 0xff6600, 0xff4400];
+    const coronaOpacities = [0.05, 0.03, 0.02];
+    const coronaSizes = [2.2, 2.5, 3.0];
+    
+    coronaColors.forEach((color, i) => {
+      const coronaGeometry = new THREE.SphereGeometry(coronaSizes[i], 32, 32);
+      const coronaMaterial = new THREE.MeshBasicMaterial({
+        color: color,
+        transparent: true,
+        opacity: coronaOpacities[i],
+        blending: THREE.AdditiveBlending,
+        side: THREE.BackSide
+      });
+      const corona = new THREE.Mesh(coronaGeometry, coronaMaterial);
+      sunMesh.add(corona);
+      coronaLayers.push(corona);
+    });
   
+    // Particle system for solar flares
+    const particleCount = 300;
+    const particles = new THREE.BufferGeometry();
+    const positions = new Float32Array(particleCount * 3);
+    const sizes = new Float32Array(particleCount);
+    const speeds = new Float32Array(particleCount);
+    
+    for (let i = 0; i < particleCount; i++) {
+      const i3 = i * 3;
+      // Random position in a sphere around the sun
+      const radius = 2 + Math.random() * 2;
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.random() * Math.PI;
+      
+      positions[i3] = radius * Math.sin(phi) * Math.cos(theta);
+      positions[i3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
+      positions[i3 + 2] = radius * Math.cos(phi);
+      
+      sizes[i] = 0.1 + Math.random() * 0.2;
+      speeds[i] = 0.005 + Math.random() * 0.01;
+    }
+    
+    particles.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    particles.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+    
+    const particleMaterial = new THREE.PointsMaterial({
+      color: 0xffaa55,
+      size: 0.15,
+      transparent: true,
+      opacity: 0.6,
+      blending: THREE.AdditiveBlending,
+      sizeAttenuation: true
+    });
+    
+    const particleSystem = new THREE.Points(particles, particleMaterial);
+    sunMesh.add(particleSystem);
+  
+    // Plane model
     let plane;
     const loader = new GLTFLoader();
     loader.load('/glbs/jet.glb', (gltf) => {
       plane = gltf.scene;
-      plane.scale.set(0.02, 0.02, 0.02); // Adjust size if needed
+      plane.scale.set(0.02, 0.02, 0.02);
       scene.add(plane);
     }, undefined, (error) => {
       console.error('Error loading model:', error);
     });
   
-    const ambientLight = new THREE.AmbientLight(0x404040);
+    // Lighting
+    const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
     scene.add(ambientLight);
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-    directionalLight.position.set(1, 1, 1);
-    scene.add(directionalLight);
+    
+    const sunLight = new THREE.DirectionalLight(0xffaa77, 1.5);
+    sunLight.position.set(1, 1, 1);
+    scene.add(sunLight);
+    
+    // Sun glow light
+    const pointLight = new THREE.PointLight(0xff6600, 2, 10);
+    pointLight.position.copy(sunMesh.position);
+    sunMesh.add(pointLight);
   
     camera.position.z = 8;
   
-    // Store scroll position
+    // Interaction variables
     let scrollY = 0;
-
     let raycaster = new THREE.Raycaster();
-    let mouse = new THREE.Vector2();
+    let mouse = new THREE.Vector2(0, 0);
     let isHovered = false;
+    let isColliding = false;
 
     const handleMouseMove = (event) => {
-      const rect = renderer.domElement.getBoundingClientRect(); // Use renderer's canvas bounds
+      const rect = renderer.domElement.getBoundingClientRect();
       mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
       mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
     };
@@ -66,71 +139,132 @@ export default function About({ isMobile }) {
     window.addEventListener('mousemove', handleMouseMove);
   
     const animate = () => {
-      requestAnimationFrame(animate);
+      frameId = requestAnimationFrame(animate);
   
-      mesh.rotation.x += 0.005;
-      mesh.rotation.y += 0.01;
+      // Smooth sun rotation
+      sunMesh.rotation.x += 0.003;
+      sunMesh.rotation.y += 0.005;
 
+      // Gentle corona pulse
+      const pulse = 0.05 * Math.sin(Date.now() * 0.001) + 1;
+      coronaLayers.forEach(layer => {
+        layer.scale.set(pulse, pulse, pulse);
+      });
+      
+      // Particle animation
+      const particlePositions = particles.attributes.position.array;
+      for (let i = 0; i < particleCount; i++) {
+        const i3 = i * 3;
+        const speed = speeds[i];
+        
+        // Move particles outward
+        particlePositions[i3] *= 1 + speed;
+        particlePositions[i3 + 1] *= 1 + speed;
+        particlePositions[i3 + 2] *= 1 + speed;
+        
+        // Reset particles that move too far
+        const distance = Math.sqrt(
+          particlePositions[i3] ** 2 + 
+          particlePositions[i3 + 1] ** 2 + 
+          particlePositions[i3 + 2] ** 2
+        );
+        
+        if (distance > 5) {
+          const radius = 2 + Math.random() * 0.5;
+          const theta = Math.random() * Math.PI * 2;
+          const phi = Math.random() * Math.PI;
+          
+          particlePositions[i3] = radius * Math.sin(phi) * Math.cos(theta);
+          particlePositions[i3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
+          particlePositions[i3 + 2] = radius * Math.cos(phi);
+        }
+      }
+      particles.attributes.position.needsUpdate = true;
+
+      // Plane animation (lemniscate curve)
       if (plane) {
-        const t = Date.now() * 0.001;
-        const a = 7.5; // Radius of the lemniscate
-        const speed = 1;
-      
-        const adjustedT = t * speed;
-        const x = (a * Math.cos(adjustedT)) / (1 + Math.sin(adjustedT) ** 2);
-        const y = (a * Math.cos(adjustedT) * Math.sin(adjustedT)) / (1 + Math.sin(adjustedT) ** 2);
-      
+        const t = Date.now() * 0.0008;
+        const a = 7.5;
+        
+        // Lemniscate of Bernoulli parametric equations
+        const denom = 1 + Math.sin(t) * Math.sin(t);
+        const x = (a * Math.cos(t)) / denom;
+        const y = (a * Math.sin(t) * Math.cos(t)) / denom;
+        
         plane.position.x = x;
-        plane.position.y = y + (scrollY * 0.017 - 7); // account for scroll
-      
-        const nextT = adjustedT + 0.01;
-        const nextX = (a * Math.cos(nextT)) / (1 + Math.sin(nextT) ** 2);
-        const nextY = (a * Math.cos(nextT) * Math.sin(nextT)) / (1 + Math.sin(nextT) ** 2);
-      
+        plane.position.y = y + (scrollY * 0.015 - 6);
+        
+        // Calculate direction for orientation
+        const nextT = t + 0.01;
+        const nextX = (a * Math.cos(nextT)) / (1 + Math.sin(nextT) * Math.sin(nextT));
+        const nextY = (a * Math.sin(nextT) * Math.cos(nextT)) / (1 + Math.sin(nextT) * Math.sin(nextT));
+        
         const direction = new THREE.Vector3(nextX - x, nextY - y, 0).normalize();
         const up = new THREE.Vector3(0, 0, 1);
-        const targetQuaternion = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), direction);
+        const targetQuaternion = new THREE.Quaternion().setFromUnitVectors(
+          new THREE.Vector3(0, 1, 0), 
+          direction
+        );
         const baseRotation = new THREE.Quaternion().setFromAxisAngle(up, Math.PI / 2);
         targetQuaternion.multiply(baseRotation);
-      
+        
         plane.quaternion.slerp(targetQuaternion, 0.1);
+        
+        // Check collision with sun
+        const distance = sunMesh.position.distanceTo(plane.position);
+        isColliding = distance < 3;
       }
 
-      // Update mesh Y position based on scroll
-      mesh.position.y = scrollY * 0.017 - 7; // Adjust scroll sensitivity here
+      // Update sun position based on scroll
+      sunMesh.position.y = scrollY * 0.015 - 6;
 
+      // Hover detection
       raycaster.setFromCamera(mouse, camera);
-      const intersects = raycaster.intersectObject(mesh);
-
-      if (intersects.length > 0) {
-        isHovered = true;
-        material.emissive.setHex(0xffff00); // Glow yellow
-      } else {
-        isHovered = false;
-        material.emissive.setHex(0x0044ff); // Reset to original
-      }      
-
-      glowTime += 0.05;
-      if (isHovered) {
-        material.emissiveIntensity = 0.7 + Math.sin(glowTime) * 0.4; // Pulsing between 0.3–1.1
-      } else {
-        material.emissiveIntensity = 0.5; // Default
-      }
-
-      // Collision detection with plane
-      if (plane) {
-        const distance = mesh.position.distanceTo(plane.position);
-        if (distance < 2) {
-          material.emissiveIntensity = 1.5;
-          material.color.setHex(0xff6600); // Collision color
+      const intersects = raycaster.intersectObject(sunMesh);
+      isHovered = intersects.length > 0;
+      
+      // Smooth glow intensity changes
+      const targetGlow = isHovered ? 1 : (isColliding ? 0.2 : 0);
+      glowIntensity.current += (targetGlow - glowIntensity.current) * 0.1;
+      
+      // Apply glow effects
+      const glowEffect = glowIntensity.current;
+      if (glowEffect > 0) {
+        material.emissiveIntensity = 0.5 + glowEffect * 0.5;
+        pointLight.intensity = 2 + glowEffect * 3;
+        
+        if (isColliding) {
+          // Reddish flare during collision
+          material.emissive.setHex(0xff9933);
+          pointLight.color.setHex(0xff9933);
+          coronaLayers.forEach(layer => {
+            layer.material.color.setHex(0xffaa55);
+            layer.material.opacity = coronaOpacities[coronaLayers.indexOf(layer)] * (2 + glowEffect);
+          });
         } else {
-          material.emissiveIntensity = 0.5;
-          material.color.setHex(0x00a8ff); // Default color
+          // Yellowish glow on hover
+          material.emissive.setHex(0xff9933);
+          pointLight.color.setHex(0xff9933);
+          coronaLayers.forEach(layer => {
+            layer.material.color.setHex(0xffaa55);
+            layer.material.opacity = coronaOpacities[coronaLayers.indexOf(layer)] * (1 + glowEffect * 2);
+          });
         }
+      } else {
+        // Reset to default
+        material.emissiveIntensity = 0.5;
+        pointLight.intensity = 2;
+        material.emissive.setHex(0xff6600);
+        pointLight.color.setHex(0xff6600);
+        coronaLayers.forEach((layer, i) => {
+          layer.material.color.setHex(coronaColors[i]);
+          layer.material.opacity = coronaOpacities[i];
+        });
       }
 
       renderer.render(scene, camera);
     };
+    
     animate();
   
     const handleResize = () => {
@@ -152,8 +286,10 @@ export default function About({ isMobile }) {
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('mousemove', handleMouseMove);
-      cancelAnimationFrame(animate);
-      container.removeChild(renderer.domElement);
+      cancelAnimationFrame(frameId);
+      if (container.contains(renderer.domElement)) {
+        container.removeChild(renderer.domElement);
+      }
     };
   }, [isMobile]);    
 
