@@ -1,8 +1,44 @@
 import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
+import ProjectCard from './projectcard';
 
 export default function Projects({ isMobile }) {
   const projectRefs = [useRef(null), useRef(null), useRef(null)];
+
+  const projects = [
+    {
+      name: "Portfolio Website",
+      description: "A personal portfolio to showcase my skills and projects.",
+      tags: [
+        { name: "react", color: "#3B82F6" },         // Tailwind's text-blue-500
+        { name: "tailwind", color: "#2DD4BF" },      // text-teal-400
+        { name: "framer-motion", color: "#F472B6" }, // text-pink-400
+      ],
+      image: "https://www.pixelstalk.net/wp-content/uploads/images6/3840x2160-Animal-Wallpaper-HD.jpg", // Replace with actual image path or URL
+      sourceCodeLink: "https://github.com/username/portfolio",
+    },
+    {
+      name: "E-commerce App",
+      description: "A full-stack shopping app with product filters and cart.",
+      tags: [
+        { name: "nodejs", color: "#22C55E" },        // text-green-500
+        { name: "mongodb", color: "#86EFAC" },       // text-green-300
+        { name: "express", color: "#FACC15" },       // text-yellow-500
+      ],
+      image: "/images/ecommerce.png",
+      sourceCodeLink: "https://github.com/username/ecommerce-app",
+    },
+    {
+      name: "Chat App",
+      description: "A real-time chat app using socket.io and React.",
+      tags: [
+        { name: "socket.io", color: "#A78BFA" },     // text-purple-500
+        { name: "react", color: "#60A5FA" },         // text-blue-400
+      ],
+      image: "/images/chatapp.png",
+      sourceCodeLink: "https://github.com/username/chat-app",
+    },
+  ];    
 
   useEffect(() => {
     const projects = [
@@ -146,6 +182,19 @@ export default function Projects({ isMobile }) {
             </div>
           </div>
         </div>
+      </div>
+      <div
+        className="main-container"
+        style={{
+          marginTop: "80px", // equivalent to mt-20
+          display: "flex",
+          flexWrap: "wrap",
+          gap: "28px", // gap-7 = 7 * 4px = 28px
+        }}
+      >
+        {projects.map((project, index) => (
+          <ProjectCard key={`project-${index}`} index={index} {...project} />
+        ))}
       </div>
     </section>
   );
