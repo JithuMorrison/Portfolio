@@ -3,7 +3,7 @@ import { Link } from 'react-scroll';
 export default function Navbar() {
   return (
     <nav>
-      <div className="logo">CS PORTFOLIO</div>
+      <div className="logo">Jithu's PORTFOLIO</div>
       <div className="nav-links">
         <Link to="about" smooth={true} duration={500}>About</Link>
         <Link to="projects" smooth={true} duration={500}>Projects</Link>

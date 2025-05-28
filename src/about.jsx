@@ -6,20 +6,18 @@ export default function About({ isMobile }) {
 
   useEffect(() => {
     if (!aboutVisualRef.current) return;
-
+  
     const container = aboutVisualRef.current;
     const width = container.clientWidth;
     const height = container.clientHeight;
-
-    // Scene setup
+  
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setSize(width, height);
+    renderer.setSize(width+340, height+340);
     container.appendChild(renderer.domElement);
-
-    // Create floating 3D model
-    const geometry = new THREE.IcosahedronGeometry(3, 1);
+  
+    const geometry = new THREE.IcosahedronGeometry(1.5, 1);
     const material = new THREE.MeshPhongMaterial({
       color: 0x00a8ff,
       emissive: 0x0044ff,
@@ -31,10 +29,9 @@ export default function About({ isMobile }) {
     });
     const mesh = new THREE.Mesh(geometry, material);
     scene.add(mesh);
-
-    // Add the moving plane
-    const planeGeometry = new THREE.PlaneGeometry(5, 5);
-    const planeMaterial = new THREE.MeshBasicMaterial({ 
+  
+    const planeGeometry = new THREE.PlaneGeometry(2.5, 2.5);
+    const planeMaterial = new THREE.MeshBasicMaterial({
       color: 0xff4d4d,
       side: THREE.DoubleSide,
       transparent: true,
@@ -43,52 +40,59 @@ export default function About({ isMobile }) {
     const plane = new THREE.Mesh(planeGeometry, planeMaterial);
     plane.rotation.x = Math.PI / 4;
     scene.add(plane);
-
-    // Lights
+  
     const ambientLight = new THREE.AmbientLight(0x404040);
     scene.add(ambientLight);
     const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
     directionalLight.position.set(1, 1, 1);
     scene.add(directionalLight);
-
+  
     camera.position.z = 8;
-
-    // Animation
-    let animationId;
+  
+    // Store scroll position
+    let scrollY = 0;
+  
     const animate = () => {
-      animationId = requestAnimationFrame(animate);
-
+      requestAnimationFrame(animate);
+  
       mesh.rotation.x += 0.005;
       mesh.rotation.y += 0.01;
-
-      // Animate the plane
+  
       plane.rotation.x += 0.002;
       plane.rotation.y += 0.003;
       plane.position.x = Math.sin(Date.now() * 0.001) * 2;
       plane.position.y = Math.cos(Date.now() * 0.001) * 2;
-
+  
+      // Update mesh Y position based on scroll
+      mesh.position.y = scrollY * 0.017 - 7; // Adjust scroll sensitivity here
+      plane.position.y = scrollY * 0.017 - 7;
+  
       renderer.render(scene, camera);
     };
     animate();
-
-    // Handle resize
+  
     const handleResize = () => {
       const newWidth = container.clientWidth;
       const newHeight = container.clientHeight;
-
       camera.aspect = newWidth / newHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(newWidth, newHeight);
     };
-
+  
+    const handleScroll = () => {
+      scrollY = window.scrollY;
+    };
+  
     window.addEventListener('resize', handleResize);
-
+    window.addEventListener('scroll', handleScroll);
+  
     return () => {
       window.removeEventListener('resize', handleResize);
-      cancelAnimationFrame(animationId);
+      window.removeEventListener('scroll', handleScroll);
+      cancelAnimationFrame(animate);
       container.removeChild(renderer.domElement);
     };
-  }, [isMobile]);
+  }, [isMobile]);    
 
   return (
     <section id="about" className="about">
