@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 
 export default function About({ isMobile }) {
   const aboutVisualRef = useRef(null);
@@ -30,16 +31,15 @@ export default function About({ isMobile }) {
     const mesh = new THREE.Mesh(geometry, material);
     scene.add(mesh);
   
-    const planeGeometry = new THREE.PlaneGeometry(2.5, 2.5);
-    const planeMaterial = new THREE.MeshBasicMaterial({
-      color: 0xff4d4d,
-      side: THREE.DoubleSide,
-      transparent: true,
-      opacity: 0.7
+    let plane;
+    const loader = new GLTFLoader();
+    loader.load('/jet.glb', (gltf) => {
+      plane = gltf.scene;
+      plane.scale.set(0.02, 0.02, 0.02); // Adjust size if needed
+      scene.add(plane);
+    }, undefined, (error) => {
+      console.error('Error loading model:', error);
     });
-    const plane = new THREE.Mesh(planeGeometry, planeMaterial);
-    plane.rotation.x = Math.PI / 4;
-    scene.add(plane);
   
     const ambientLight = new THREE.AmbientLight(0x404040);
     scene.add(ambientLight);
@@ -57,16 +57,48 @@ export default function About({ isMobile }) {
   
       mesh.rotation.x += 0.005;
       mesh.rotation.y += 0.01;
-  
-      plane.rotation.x += 0.002;
-      plane.rotation.y += 0.003;
-      plane.position.x = Math.sin(Date.now() * 0.001) * 2;
-      plane.position.y = Math.cos(Date.now() * 0.001) * 2;
-  
+
+      if(plane){
+        // Create infinity symbol path movement
+        const t = Date.now() * 0.001;
+        const a = 7; // Width of the infinity symbol
+        const b = 5; // Height of the infinity symbol
+        
+        // Calculate current and next positions
+        const currentX = a * Math.sin(t) / (1 + Math.pow(Math.cos(t), 2));
+        const currentY = b * Math.sin(t) * Math.cos(t) / (1 + Math.pow(Math.cos(t), 2)) + (scrollY * 0.017 - 7);
+        const nextT = t + 0.01;
+        const nextX = a * Math.sin(nextT) / (1 + Math.pow(Math.cos(nextT), 2));
+        const nextY = b * Math.sin(nextT) * Math.cos(nextT) / (1 + Math.pow(Math.cos(nextT), 2)) + (scrollY * 0.017 - 7);
+        
+        // Update position
+        plane.position.x = currentX;
+        plane.position.y = currentY;
+        
+        // Calculate direction vector and target quaternion
+        const direction = new THREE.Vector3(nextX - currentX, nextY - currentY, 0).normalize();
+        const up = new THREE.Vector3(0, 0, 1);
+        const targetQuaternion = new THREE.Quaternion();
+        targetQuaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), direction);
+        
+        // Apply base rotation
+        const baseRotation = new THREE.Quaternion().setFromAxisAngle(up, Math.PI / 2);
+        targetQuaternion.multiply(baseRotation);
+        
+        // Add tilt for downward movement
+        if (nextY < currentY) {
+          const tiltAxis = new THREE.Vector3(1, 0, 0);
+          const tiltQuaternion = new THREE.Quaternion().setFromAxisAngle(tiltAxis, Math.PI / 4);
+          targetQuaternion.multiply(tiltQuaternion);
+        }
+        
+        // Smoothly interpolate rotation
+        plane.quaternion.slerp(targetQuaternion, 0.1);
+      }
+
       // Update mesh Y position based on scroll
       mesh.position.y = scrollY * 0.017 - 7; // Adjust scroll sensitivity here
-      plane.position.y = scrollY * 0.017 - 7;
-  
+
       renderer.render(scene, camera);
     };
     animate();
