@@ -11,8 +11,8 @@ export default function About({ isMobile }) {
     if (!aboutVisualRef.current) return;
   
     const container = aboutVisualRef.current;
-    const width = container.clientWidth;
-    const height = container.clientHeight;
+    const width = window.innerWidth * 1.3 / 2;
+    const height = window.innerHeight;
   
     // Scene setup
     const scene = new THREE.Scene();
@@ -21,7 +21,7 @@ export default function About({ isMobile }) {
       antialias: true, 
       alpha: true 
     });
-    renderer.setSize(width+340, height+340);
+    renderer.setSize(width, height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     container.appendChild(renderer.domElement);
   
@@ -192,7 +192,7 @@ export default function About({ isMobile }) {
         const y = (a * Math.sin(t) * Math.cos(t)) / denom;
         
         plane.position.x = x;
-        plane.position.y = y + (scrollY * 0.015 - 6);
+        plane.position.y = y - 3.5 + (scrollY * 0.015 - 6);
         
         // Calculate direction for orientation
         const nextT = t + 0.01;
@@ -216,7 +216,7 @@ export default function About({ isMobile }) {
       }
 
       // Update sun position based on scroll
-      sunMesh.position.y = scrollY * 0.015 - 6;
+      sunMesh.position.y = scrollY * 0.015 - 9;
 
       // Hover detection
       raycaster.setFromCamera(mouse, camera);
@@ -268,8 +268,8 @@ export default function About({ isMobile }) {
     animate();
   
     const handleResize = () => {
-      const newWidth = container.clientWidth;
-      const newHeight = container.clientHeight;
+      const newWidth = window.innerWidth;
+      const newHeight = window.innerHeight;
       camera.aspect = newWidth / newHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(newWidth, newHeight);
@@ -313,7 +313,18 @@ export default function About({ isMobile }) {
               <div className="skill">Machine Learning</div>
             </div>
           </div>
-          <div className="about-visual" ref={aboutVisualRef}></div>
+          <div className="about-visual" ref={aboutVisualRef}>
+            <img 
+              src="https://static.vecteezy.com/system/resources/previews/024/396/102/large_2x/a-view-from-space-to-a-galaxy-and-stars-universe-filled-with-stars-nebula-and-galaxy-panoramic-shot-wide-format-elements-of-this-image-furnished-by-nasa-free-photo.jpg" 
+              alt="3D visualization of sun and airplane concepts"
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                borderRadius: '8px'
+              }}
+            />
+          </div>
         </div>
       </div>
     </section>

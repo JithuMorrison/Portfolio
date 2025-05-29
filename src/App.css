@@ -78,6 +78,8 @@ nav {
 
 /* Hero Section */
 .hero {
+  padding-top: 500px;
+  margin-bottom: 200px;
   height: 100vh;
   display: flex;
   align-items: center;
