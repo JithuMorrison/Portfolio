@@ -184,7 +184,7 @@ export default function About({ isMobile }) {
       // Plane animation (lemniscate curve)
       if (plane) {
         const t = Date.now() * 0.0008;
-        const a = 7.5;
+        const a = 7;
         
         // Lemniscate of Bernoulli parametric equations
         const denom = 1 + Math.sin(t) * Math.sin(t);
@@ -192,7 +192,7 @@ export default function About({ isMobile }) {
         const y = (a * Math.sin(t) * Math.cos(t)) / denom;
         
         plane.position.x = x;
-        plane.position.y = y - 3.5 + (scrollY * 0.015 - 6);
+        plane.position.y = y - 1.2 + (scrollY * 0.015 - 6);
         
         // Calculate direction for orientation
         const nextT = t + 0.01;
@@ -216,7 +216,7 @@ export default function About({ isMobile }) {
       }
 
       // Update sun position based on scroll
-      sunMesh.position.y = scrollY * 0.015 - 9;
+      sunMesh.position.y = scrollY * 0.015 - 7;
 
       // Hover detection
       raycaster.setFromCamera(mouse, camera);

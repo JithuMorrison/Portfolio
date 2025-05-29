@@ -45,7 +45,7 @@ export default function Hero() {
       (gltf) => {
         model = gltf.scene;
         model.scale.set(1, 1, 1);
-        model.position.set(0, 0, 0);
+        model.position.set(0, 5, 0);
         scene.add(model);
       },
       undefined,
@@ -72,10 +72,15 @@ export default function Hero() {
         model.rotation.x = 3.3;
       }
       
-      if(window.scrollY > 3500){
+      if(window.scrollY > 3300){
         if (model) {
-          if(model.position.z < 4.18){
-            model.position.z += 0.005;
+          if(model.position.y > 0){
+            model.position.y -= 0.015;
+          }
+          else{
+            if(model.position.z < 4.18){
+              model.position.z += 0.005;
+            }
           }
           model.rotation.y += 0.005; // Adjust rotation speed here
         }
