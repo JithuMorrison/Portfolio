@@ -25,7 +25,7 @@ export default function Projects({ isMobile }) {
         { name: "mongodb", color: "#86EFAC" },       // text-green-300
         { name: "express", color: "#FACC15" },       // text-yellow-500
       ],
-      image: "/images/ecommerce.png",
+      image: "https://images.pexels.com/photos/460775/pexels-photo-460775.jpeg?cs=srgb&dl=animal-animal-photography-blur-460775.jpg&fm=jpg",
       sourceCodeLink: "https://github.com/username/ecommerce-app",
     },
     {
@@ -35,7 +35,17 @@ export default function Projects({ isMobile }) {
         { name: "socket.io", color: "#A78BFA" },     // text-purple-500
         { name: "react", color: "#60A5FA" },         // text-blue-400
       ],
-      image: "/images/chatapp.png",
+      image: "https://images.pexels.com/photos/158471/ibis-bird-red-animals-158471.jpeg?cs=srgb&dl=animal-animals-avian-158471.jpg&fm=jpg",
+      sourceCodeLink: "https://github.com/username/chat-app",
+    },
+    {
+      name: "Chat App",
+      description: "A real-time chat app using socket.io and React.",
+      tags: [
+        { name: "socket.io", color: "#A78BFA" },     // text-purple-500
+        { name: "react", color: "#60A5FA" },         // text-blue-400
+      ],
+      image: "https://images.pexels.com/photos/158471/ibis-bird-red-animals-158471.jpeg?cs=srgb&dl=animal-animals-avian-158471.jpg&fm=jpg",
       sourceCodeLink: "https://github.com/username/chat-app",
     },
   ];    
@@ -184,12 +194,13 @@ export default function Projects({ isMobile }) {
         </div>
       </div>
       <div
-        className="main-container"
         style={{
           marginTop: "80px", // equivalent to mt-20
           display: "flex",
           flexWrap: "wrap",
           gap: "28px", // gap-7 = 7 * 4px = 28px
+          justifyContent: "center",
+          alignItems: "center"
         }}
       >
         {projects.map((project, index) => (
