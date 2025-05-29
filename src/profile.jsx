@@ -61,8 +61,8 @@ export default function Projects({ isMobile }) {
       if (!project.ref.current) return;
 
       const container = project.ref.current;
-      const width = container.clientWidth;
-      const height = container.clientHeight;
+      const width = window.innerWidth/9;
+      const height = window.innerHeight;
 
       // Scene setup
       const scene = new THREE.Scene();
@@ -75,7 +75,7 @@ export default function Projects({ isMobile }) {
       let geometry;
       switch(project.shape) {
         case 'sphere':
-          geometry = new THREE.SphereGeometry(1.5, 32, 32);
+          geometry = new THREE.IcosahedronGeometry(1.5, 1);
           break;
         case 'torus':
           geometry = new THREE.TorusGeometry(1.5, 0.5, 16, 32);
@@ -105,7 +105,7 @@ export default function Projects({ isMobile }) {
       directionalLight.position.set(1, 1, 1);
       scene.add(directionalLight);
 
-      camera.position.z = 5;
+      camera.position.z = 15;
 
       // Animation
       let animationId;
@@ -114,13 +114,22 @@ export default function Projects({ isMobile }) {
         mesh.rotation.x += 0.005;
         mesh.rotation.y += 0.01;
         renderer.render(scene, camera);
+        if(project.shape === 'sphere'){
+          mesh.position.y = 4;
+        }
+        if(project.shape ==='torus'){
+          mesh.position.y = 2;
+        }
+        if(project.shape ==='box'){
+          mesh.position.y = 0;
+        }
       };
       animate();
 
       // Handle resize
       const handleResize = () => {
-        const newWidth = container.clientWidth;
-        const newHeight = container.clientHeight;
+        const newWidth = window.innerWidth/9;
+        const newHeight = window.innerHeight;
         camera.aspect = newWidth / newHeight;
         camera.updateProjectionMatrix();
         renderer.setSize(newWidth, newHeight);
