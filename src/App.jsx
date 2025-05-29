@@ -6,6 +6,7 @@ import About from './about';
 import Projects from './profile';
 import Contact from './contact';
 import Footer from './footer';
+import FinText from './finaltext';
 
 function App() {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -28,6 +29,7 @@ function App() {
         <About isMobile={isMobile} />
         <Projects isMobile={isMobile} />
         <Contact />
+        <FinText />
       </main>
       <Footer />
     </div>

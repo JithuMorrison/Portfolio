@@ -84,10 +84,20 @@ nav {
   display: flex;
   align-items: center;
   position: relative;
+  text-align: center;
+}
+
+.bero {
+  margin-top: -130px;
+  padding-bottom: 90px;
+  display: flex;
+  align-items: center;
+  position: relative;
+  text-align: center;
 }
 
 .hero-content {
-  max-width: 600px;
+  max-width: 780px;
 }
 
 .hero h1 {
@@ -101,6 +111,23 @@ nav {
 }
 
 .hero p {
+  font-size: 18px;
+  line-height: 1.6;
+  margin-bottom: 30px;
+  opacity: 0.9;
+}
+
+.bero h1 {
+  font-size: 72px;
+  font-weight: 800;
+  margin-bottom: 20px;
+  background: linear-gradient(90deg, #ff4d4d, #f9cb28);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  line-height: 1.2;
+}
+
+.bero p {
   font-size: 18px;
   line-height: 1.6;
   margin-bottom: 30px;
