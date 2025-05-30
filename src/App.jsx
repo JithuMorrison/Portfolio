@@ -176,8 +176,7 @@ function App() {
         `}</style>
       </div>
     );
-  }
-  
+  }  
 
   return (
     <div className="app">
