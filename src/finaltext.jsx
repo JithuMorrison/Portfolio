@@ -2,14 +2,28 @@ import { useEffect, useState } from 'react';
 
 export default function FinText() {
   const [showButton, setShowButton] = useState(false);
+  const [timerStarted, setTimerStarted] = useState(false);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowButton(true);
-    }, 16000); // 10 seconds
+    const handleScroll = () => {
+      if (window.scrollY > 3300 && !timerStarted) {
+        setTimerStarted(true); // Prevent multiple timers
 
-    return () => clearTimeout(timer); // Cleanup
-  }, []);
+        const timer = setTimeout(() => {
+          setShowButton(true);
+        }, 18000); // Start 16s timer
+
+        // Cleanup in case component unmounts before timer completes
+        return () => clearTimeout(timer);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, [timerStarted]);
 
   return (
     <section className="bero">
@@ -21,7 +35,7 @@ export default function FinText() {
           </p>
 
           {showButton && (
-            <a className='cta-button' href="https://yourportfolio.com">
+            <a className="cta-button" href="https://yourportfolio.com">
               View my portfolio
             </a>
           )}
