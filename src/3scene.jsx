@@ -76,12 +76,34 @@ export default function ThreeScene({ isMobile }) {
     
     const particleMesh = new THREE.Points(particles, particleMaterial);
     scene.add(particleMesh);
+
+    const starsGeometry = new THREE.BufferGeometry();
+    const starsMaterial = new THREE.PointsMaterial({
+      color: 0xffffff,
+      size: 0.05,
+      transparent: true
+    });
+
+    const starsVertices = [];
+    for (let i = 0; i < 10000; i++) {
+      const x = (Math.random() - 0.5) * 2000;
+      const y = (Math.random() - 0.5) * 2000;
+      const z = (Math.random() - 0.5) * 2000;
+      starsVertices.push(x, y, z);
+    }
+
+    starsGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starsVertices, 3));
+    const stars = new THREE.Points(starsGeometry, starsMaterial);
+    scene.add(stars);
     
     // Animation
     const clock = new THREE.Clock();
     
     const animate = () => {
       requestAnimationFrame(animate);
+
+      stars.rotation.x += 0.0005;
+      stars.rotation.y += 0.001;
       
       const elapsedTime = clock.getElapsedTime();
       
